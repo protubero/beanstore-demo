@@ -44,17 +44,17 @@ public class RestController implements CrudHandler {
 
 	@Override
 	public void getAll(Context ctx) {
-		ctx.json(store.objects(ToDo.class).collect(Collectors.toList()));
+		ctx.json(store.reader().objects(ToDo.class).collect(Collectors.toList()));
 	}
 
 	@Override
 	public void getOne(Context ctx, String id) {
-		ctx.json(store.find(ToDo.class, Long.valueOf(id)));
+		ctx.json(store.reader().find(ToDo.class, Long.valueOf(id)));
 	}
 
 	@Override
 	public void update(Context ctx, String id) {
-		ToDo todo = store.find(ToDo.class, Long.valueOf(id));
+		ToDo todo = store.reader().find(ToDo.class, Long.valueOf(id));
 		var tx = store.transaction();
 		
 		ObjectNode node = ctx.bodyAsClass(ObjectNode.class);

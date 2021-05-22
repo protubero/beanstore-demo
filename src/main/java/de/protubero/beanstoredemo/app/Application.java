@@ -80,8 +80,8 @@ public class Application {
         var store = factory.create();        
         
         // total todo count
-        todoCount = store.objects(ToDo.class).count();		
-		store.onChangeInstanceAsync(ToDo.class, sit -> {
+        todoCount = store.reader().objects(ToDo.class).count();		
+		store.writer().onChangeInstanceAsync(ToDo.class, sit -> {
 			switch (sit.type()) {
 			case Create:
 				todoCount++;
@@ -97,7 +97,7 @@ public class Application {
         
         
         // check invariant
-        store.verifyInstance(ToDo.class, bc -> {
+        store.writer().verifyInstance(ToDo.class, bc -> {
         	if (bc.newInstance().getText() != null) {
         		if (bc.newInstance().getText().contains("invalid")) {
         			throw new RuntimeException("Invalid todo text: " + bc.newInstance().getText());

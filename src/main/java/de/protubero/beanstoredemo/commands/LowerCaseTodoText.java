@@ -10,7 +10,7 @@ public class LowerCaseTodoText extends AbstractCommand {
 		store.executeDeferred(ctx -> {
 			var tx = ctx.transaction();
 
-			store.objects(ToDo.class).forEach(todo -> {
+			store.reader().objects(ToDo.class).forEach(todo -> {
 				if (todo.getText() != null) {
 					var updToDo = tx.update(todo);
 					updToDo.setText(updToDo.getText().toLowerCase());
