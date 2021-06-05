@@ -5,7 +5,8 @@ import java.util.stream.Collectors;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
-import de.protubero.beanstore.init.BeanStore;
+import de.protubero.beanstore.api.BeanStore;
+import de.protubero.beanstore.api.EntityReadAccess;
 import de.protubero.beanstoredemo.model.ToDo;
 import io.javalin.apibuilder.CrudHandler;
 import io.javalin.http.Context;
@@ -13,9 +14,11 @@ import io.javalin.http.Context;
 public class RestController implements CrudHandler {
 
 	private BeanStore store;
+	private EntityReadAccess<ToDo> todoStore;
 	
 	public RestController(BeanStore store) {
 		this.store = store;
+		this.todoStore = store.read().entity(ToDo.class);
 	}
 
 	@Override
@@ -44,22 +47,29 @@ public class RestController implements CrudHandler {
 
 	@Override
 	public void getAll(Context ctx) {
-		ctx.json(store.reader().objects(ToDo.class).collect(Collectors.toList()));
+		ctx.json(todoStore.stream().collect(Collectors.toList()));
 	}
 
 	@Override
 	public void getOne(Context ctx, String id) {
-		ctx.json(store.reader().find(ToDo.class, Long.valueOf(id)));
+		ctx.json(todoStore.find(Long.valueOf(id)));
 	}
 
 	@Override
 	public void update(Context ctx, String id) {
-		ToDo todo = store.reader().find(ToDo.class, Long.valueOf(id));
+		ToDo todo = todoStore.find(Long.valueOf(id));
 		var tx = store.transaction();
 		
 		ObjectNode node = ctx.bodyAsClass(ObjectNode.class);
-		String text = node.get("text").asText();
-		tx.update(todo).setText(text);
+		ToDo upd = tx.update(todo);
+		if (node.get("text") != null) {
+			String text = node.get("text").asText();
+			upd.setText(text);
+		}
+		if (node.get("done") != null) {
+			boolean done = node.get("done").asBoolean();
+			upd.setDone(done);
+		}
 
 		tx.execute();
 	}

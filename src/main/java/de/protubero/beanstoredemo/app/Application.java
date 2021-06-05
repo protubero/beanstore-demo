@@ -10,16 +10,17 @@ import java.time.Instant;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 
-import de.protubero.beanstore.base.AbstractPersistentObject;
-import de.protubero.beanstore.base.BeanStoreInstanceSerializer;
-import de.protubero.beanstore.init.BeanStoreFactory;
+import de.protubero.beanstore.api.BeanStoreFactory;
+import de.protubero.beanstore.base.entity.AbstractPersistentObject;
+import de.protubero.beanstore.base.entity.BeanStoreInstanceSerializer;
+import de.protubero.beanstore.base.tx.TransactionFailure;
 import de.protubero.beanstore.plugins.history.BeanStoreHistoryPlugin;
 import de.protubero.beanstore.plugins.search.BeanStoreSearchPlugin;
 import de.protubero.beanstore.plugins.txlog.BeanStoreTransactionLogPlugin;
 import de.protubero.beanstore.store.InstanceNotFoundException;
-import de.protubero.beanstore.writer.TransactionFailure;
 import de.protubero.beanstoredemo.commands.AbstractCommand;
 import de.protubero.beanstoredemo.model.ToDo;
+import de.protubero.beanstoredemo.model.TodoCount;
 import io.javalin.Javalin;
 import io.javalin.plugin.json.JavalinJackson;
 
@@ -28,8 +29,12 @@ public class Application {
 	private static long todoCount;
 
 	public static void main(String[] args) {
+		start(new File("c:/work/app.kryo"), 7000);
+	}
+		
+	public static void start(File file, int port) {
         // Init bean store
-        BeanStoreFactory factory = BeanStoreFactory.of(new File("c:/work/app.kryo"));
+        BeanStoreFactory factory = BeanStoreFactory.of(file);
         
         // log transactions to slf4j logger
         factory.addPlugin(new BeanStoreTransactionLogPlugin());
@@ -39,7 +44,7 @@ public class Application {
         factory.addPlugin(historyPlugin);
         
         // register entities
-        var todoEntity = factory.registerType(ToDo.class);
+        var todoEntity = factory.registerEntity(ToDo.class);
         
         // configure full text search
         BeanStoreSearchPlugin searchPlugin = new BeanStoreSearchPlugin();
@@ -55,10 +60,11 @@ public class Application {
         	newTodo.setText("Read BeanStore docs");
         });
         
-        // add migrations
+        // add migrations - sample code
+        /*
         factory.addMigration("myTextRename", tx -> {
-        	if (tx.dataStore().exists("todo")) {
-	        	tx.dataStore().objects("todo").forEach(obj -> {
+        	if (tx.read().entityOptional("todo").isPresent()) {
+	        	tx.read().entity("todo").forEach(obj -> {
 	        		var upd = tx.update(obj);        		
 	        		upd.put("myText", obj.get("text"));
 	        		var origText = upd.remove("text");
@@ -67,8 +73,8 @@ public class Application {
         	}	
         });
         factory.addMigration("myTextRename2", tx -> {
-        	if (tx.dataStore().exists("todo")) {
-	        	tx.dataStore().objects("todo").forEach(obj -> {
+        	if (tx.read().entityOptional("todo").isPresent()) {
+	        	tx.read().entity("todo").forEach(obj -> {
 	        		var upd = tx.update(obj);        		
 	        		upd.put("text", obj.get("myText"));
 	        		var origText = upd.remove("myText");
@@ -76,12 +82,13 @@ public class Application {
 	        	});
         	}	
         });
+        */
         
         var store = factory.create();        
         
         // total todo count
-        todoCount = store.reader().objects(ToDo.class).count();		
-		store.writer().onChangeInstanceAsync(ToDo.class, sit -> {
+        todoCount = store.read().entity(ToDo.class).count();		
+		store.callbacks().onChangeInstanceAsync(ToDo.class, sit -> {
 			switch (sit.type()) {
 			case Create:
 				todoCount++;
@@ -97,7 +104,7 @@ public class Application {
         
         
         // check invariant
-        store.writer().verifyInstance(ToDo.class, bc -> {
+        store.callbacks().verifyInstance(ToDo.class, bc -> {
         	if (bc.newInstance().getText() != null) {
         		if (bc.newInstance().getText().contains("invalid")) {
         			throw new RuntimeException("Invalid todo text: " + bc.newInstance().getText());
@@ -109,7 +116,8 @@ public class Application {
         Javalin app = Javalin.create(cfg -> {
         	cfg.enableCorsForAllOrigins();
         	cfg.showJavalinBanner = false;
-        }).start(7000);
+        	cfg.enableDevLogging();
+        }).start(port);
 
         // register default serializer for beanstore beans 
         SimpleModule module = new SimpleModule();
@@ -136,11 +144,13 @@ public class Application {
             
             // Fulltext Search
             get("search", ctx -> {
-        		ctx.json(searchPlugin.search(ctx.queryParam("query")));            	
+        		String queryParam = ctx.queryParam("query");
+        		System.out.println(queryParam);
+				ctx.json(searchPlugin.search(queryParam));            	
             });
             
             get("count", ctx -> {
-            	ctx.json(todoCount);            	
+            	ctx.json(new TodoCount(todoCount));            	
             });
             
             // CQRS command interface

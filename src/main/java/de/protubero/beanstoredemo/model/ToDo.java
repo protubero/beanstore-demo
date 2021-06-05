@@ -2,8 +2,8 @@ package de.protubero.beanstoredemo.model;
 
 import java.time.Instant;
 
-import de.protubero.beanstore.base.AbstractEntity;
-import de.protubero.beanstore.base.Entity;
+import de.protubero.beanstore.base.entity.AbstractEntity;
+import de.protubero.beanstore.base.entity.Entity;
 
 @Entity(alias = "todo")
 public class ToDo extends AbstractEntity {
