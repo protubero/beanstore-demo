@@ -58,6 +58,7 @@ public class Application {
         	var newTodo = tx.create(ToDo.class);
         	newTodo.setCreatedAt(Instant.now());
         	newTodo.setText("Read BeanStore docs");
+        	newTodo.setDone(false);
         });
         
         // add migrations - sample code
@@ -87,7 +88,7 @@ public class Application {
         var store = factory.create();        
         
         // total todo count
-        todoCount = store.read().entity(ToDo.class).count();		
+        todoCount = store.state().entity(ToDo.class).count();		
 		store.callbacks().onChangeInstanceAsync(ToDo.class, sit -> {
 			switch (sit.type()) {
 			case Create:

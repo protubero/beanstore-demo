@@ -9,7 +9,7 @@ import de.protubero.beanstore.base.entity.Entity;
 public class ToDo extends AbstractEntity {
 
 	private String text;
-	private boolean done;
+	private Boolean done;
 	private Instant createdAt;
 
 	public Instant getCreatedAt() {
@@ -20,11 +20,11 @@ public class ToDo extends AbstractEntity {
 		this.createdAt = createdAt;
 	}
 
-	public boolean isDone() {
+	public Boolean getDone() {
 		return done;
 	}
 
-	public void setDone(boolean done) {
+	public void setDone(Boolean done) {
 		this.done = done;
 	}
 

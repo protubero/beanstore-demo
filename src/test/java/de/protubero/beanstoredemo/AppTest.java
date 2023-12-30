@@ -69,6 +69,7 @@ public class AppTest {
 		
 		// test CQRS command
 		lowerToDoTexts();
+		Thread.sleep(1000l);
 		assertTodoObj(GET("todos/" + todoId), "new text", true);
 				
 		// search
