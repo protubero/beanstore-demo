@@ -1,0 +1,14 @@
+First BeanStore Initialisation
+
+
+Spring Boot based example with annotation based
+	- Aggregates
+		@InstanceListener(ToDo.class)
+	- Entity discovery
+	- @Configuiration / @Bean  BeanStore, SearchPlugin, HistoryPlugin 
+	- Endpoint
+		States
+		Aggregate
+		entities (Store?)
+	- Commands ohne abstr. super type	
+	
