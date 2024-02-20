@@ -10,14 +10,14 @@ import java.time.Instant;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 
-import de.protubero.beanstore.api.BeanStoreFactory;
-import de.protubero.beanstore.base.entity.AbstractPersistentObject;
-import de.protubero.beanstore.base.entity.BeanStoreInstanceSerializer;
-import de.protubero.beanstore.base.tx.TransactionFailure;
+import de.protubero.beanstore.builder.BeanStoreBuilder;
+import de.protubero.beanstore.entity.AbstractPersistentObject;
+import de.protubero.beanstore.entity.BeanStoreInstanceSerializer;
 import de.protubero.beanstore.plugins.history.BeanStoreHistoryPlugin;
 import de.protubero.beanstore.plugins.search.BeanStoreSearchPlugin;
 import de.protubero.beanstore.plugins.txlog.BeanStoreTransactionLogPlugin;
 import de.protubero.beanstore.store.InstanceNotFoundException;
+import de.protubero.beanstore.tx.TransactionFailure;
 import de.protubero.beanstoredemo.commands.AbstractCommand;
 import de.protubero.beanstoredemo.model.ToDo;
 import de.protubero.beanstoredemo.model.TodoCount;
@@ -34,7 +34,7 @@ public class Application {
 		
 	public static void start(File file, int port) {
         // Init bean store
-        BeanStoreFactory factory = BeanStoreFactory.of(file);
+        BeanStoreBuilder factory = BeanStoreBuilder.init(file);
         
         // log transactions to slf4j logger
         factory.addPlugin(new BeanStoreTransactionLogPlugin());
