@@ -6,15 +6,11 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
 import java.lang.annotation.Retention;
 import java.lang.annotation.Target;
 
-import com.esotericsoftware.kryo.kryo5.Serializer;
+import org.springframework.stereotype.Service;
 
 @Retention(RUNTIME)
 @Target(TYPE)
-public @interface KryoConfig {
+@Service
+public @interface BeanStoreCallback {
 
-	int id();
-	
-	@SuppressWarnings("rawtypes")
-	Class<? extends Serializer> serializer();
-	
 }

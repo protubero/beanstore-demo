@@ -1,7 +1,7 @@
 package de.protubero.beanstoredemo.beans;
 
+import de.protubero.beanstore.persistence.api.KryoConfig;
 import de.protubero.beanstore.persistence.kryo.PropertyBeanSerializer;
-import de.protubero.beanstoredemo.framework.KryoConfig;
 
 @KryoConfig(id = 304, serializer = PropertyBeanSerializer.class)
 public class Address {

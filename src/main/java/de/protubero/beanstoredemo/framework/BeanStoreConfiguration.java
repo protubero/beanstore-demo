@@ -12,14 +12,14 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-
-import com.esotericsoftware.kryo.kryo5.Serializer;
 
 import de.protubero.beanstore.api.BeanStore;
 import de.protubero.beanstore.builder.BeanStoreBuilder;
 import de.protubero.beanstore.entity.Entity;
+import de.protubero.beanstore.persistence.api.KryoConfig;
 import de.protubero.beanstore.persistence.kryo.KryoConfiguration;
 import de.protubero.beanstore.persistence.kryo.KryoPersistence;
 
@@ -31,12 +31,16 @@ public class BeanStoreConfiguration {
 	@Value("${beanstore.file}")
 	private String filename;
 
-	
 	@Autowired
 	private BeanStoreInitializer storeInitializer;
-	
+
+	@Autowired
+	private ApplicationContext applicationContext;
+
 	@Autowired
 	private ClassScanner classScanner;
+	
+	private List<Runnable> initInvocations = new ArrayList<>();
 
 	private static final String[] SCANNED_PACKAGES = { "de.protubero.beanstoredemo" };
 
@@ -48,44 +52,10 @@ public class BeanStoreConfiguration {
 		KryoConfiguration kryoConfig = KryoConfiguration.create();
 		Set<String> kryoConfClassSet = classScanner.findAnnotatedClasses(KryoConfig.class, SCANNED_PACKAGES);
 		kryoConfClassSet.forEach(cls -> {
-			log.info("Kryo configuration of class {}", cls);
-
 			Class<?> clazz = classByName(cls);
-			KryoConfig annotation = clazz.getAnnotation(KryoConfig.class);
-
-			Constructor<? extends Serializer> serializerConstructor;
-			Serializer<?> serializer = null;
-			try {
-				try {
-					serializerConstructor = annotation.serializer().getConstructor(Class.class);
-					serializer = serializerConstructor.newInstance(clazz);
-				} catch (NoSuchMethodException e) {
-					try {
-						serializerConstructor = annotation.serializer().getConstructor();
-						serializer = serializerConstructor.newInstance();
-					} catch (NoSuchMethodException e2) {
-						throw new RuntimeException(
-								"Missing no-arg constructor of serializer " + annotation.serializer().getSimpleName());
-					}
-				}
-			} catch (InstantiationException | IllegalAccessException | IllegalArgumentException
-					| InvocationTargetException e) {
-				throw new RuntimeException(e);
-			}
-
-			kryoConfig.register(clazz, (Serializer) serializer, annotation.id());
-		});
-
-		/*
-		Set<String> propertyBeanClassSet = classScanner.findAnnotatedClasses(PropertyBean.class, SCANNED_PACKAGES);
-		propertyBeanClassSet.forEach(cls -> {
-			Class<?> clazz = classByName(cls);
-			PropertyBean annotation = clazz.getAnnotation(PropertyBean.class);
 			kryoConfig.register(clazz);
 		});
-		*/
-		
-		
+
 		log.info("Build Kryo Persistence");
 		File dataFile = new File(filename);
 		KryoPersistence persistence = KryoPersistence.of(dataFile, kryoConfig);
@@ -101,7 +71,7 @@ public class BeanStoreConfiguration {
 		builder.initNewStore(storeInitializer);
 
 		// Migrations
-		List<MigrationNode> migrationList = new ArrayList<>(); 
+		List<MigrationNode> migrationList = new ArrayList<>();
 		Set<String> migrationBeanClassSet = classScanner.findAnnotatedClasses(Migration.class, SCANNED_PACKAGES);
 		migrationBeanClassSet.forEach(cls -> {
 			Class<?> clazz = classByName(cls);
@@ -110,16 +80,45 @@ public class BeanStoreConfiguration {
 			try {
 				Constructor<?> noArgsConstructor = clazz.getConstructor();
 				migration = (BeanStoreMigration) noArgsConstructor.newInstance();
-			} catch (NoSuchMethodException | SecurityException | InstantiationException | IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
+			} catch (NoSuchMethodException | SecurityException | InstantiationException | IllegalAccessException
+					| IllegalArgumentException | InvocationTargetException e) {
 				throw new RuntimeException(e);
 			}
-			
+
 			migrationList.add(new MigrationNode(annotation.name(), annotation.order(), migration));
 		});
 		migrationList.sort(Comparator.comparingInt(m -> m.getOrder()));
 		migrationList.forEach(m -> {
 			builder.addMigration(m.getName(), m.getMigration());
 		});
+
+		
+		// Callbacks
+//		builder.addPlugin(new BeanStorePlugin() {
+//			@Override
+//			public void onEndCreate(BeanStore beanStore) {
+//				initMethods.forEach(m -> {
+//					try {
+//						m.invoke();
+//					} catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
+//						throw new RuntimeException(e);
+//					}
+//				});
+//			};
+//		});
+//		Collection<Object> callbackObjects = applicationContext.getBeansWithAnnotation(BeanStoreCallback.class).values();
+//		callbackObjects.forEach(co -> {
+//			for(Method method : co.getClass().getDeclaredMethods()) {
+//				BeanStoreInitialized initAnnotation = method.getAnnotation(BeanStoreInitialized.class);
+//				if (initAnnotation != null) {
+//					Class<?>[] paramTypes = method.getParameterTypes();
+//					if (paramTypes.length != 1 || !BeanStore.class.isAssignableFrom(paramTypes[0])) {
+//						throw new RuntimeException("Invalid parameters of 'BeanStoreInitialized' annotated method " + method.getName());
+//					}
+//					initMethods.add(method);
+//				}
+//			}
+//		});
 		
 		return builder.build();
 	}

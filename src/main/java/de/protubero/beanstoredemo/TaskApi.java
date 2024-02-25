@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.RestController;
 import de.protubero.beanstore.api.BeanStore;
 import de.protubero.beanstore.api.EntityStoreSnapshot;
 import de.protubero.beanstoredemo.beans.Task;
+import de.protubero.beanstoredemo.callbacks.TaskCounter;
 
 @RestController
 @RequestMapping("/tasks")
@@ -25,6 +26,9 @@ public class TaskApi {
 	@Autowired
 	private BeanStore store;
 
+	@Autowired
+	private TaskCounter counter;
+	
 	private EntityStoreSnapshot<Task> entityStore() {
 		return store.snapshot().entity(Task.class);
 	}
@@ -34,6 +38,12 @@ public class TaskApi {
 		return entityStore().asList();
 	}
 	
+	@GetMapping(value = "/count")
+	public Long count() {
+		return counter.getCount();
+	}
+	
+	
 	@GetMapping(value = "/{id}")
     public Task findById(@PathVariable("id") Long id) {
         return entityStore().find(id);
@@ -42,25 +52,19 @@ public class TaskApi {
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public Long create(@RequestBody Task task) {
-    	var tx = store.transaction();
-    	tx.create(task);
-    	tx.execute();
+    	store.create(task);
         return task.id();
     }
 
     @PutMapping(value = "/{id}")
     @ResponseStatus(HttpStatus.OK)
     public void update(@PathVariable( "id" ) Long id, @RequestBody Task task) {
-    	var tx = store.transaction();
-    	tx.update(task);
-    	tx.execute();
+    	store.update(task);
     }
 
     @DeleteMapping(value = "/{id}")
     @ResponseStatus(HttpStatus.OK)
     public void delete(@PathVariable("id") Long id) {
-    	var tx = store.transaction();
-    	tx.delete(Task.class, id);
-    	tx.execute();
+    	store.delete(Task.class, id);
     }	
 }

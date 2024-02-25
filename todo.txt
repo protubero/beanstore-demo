@@ -10,5 +10,5 @@ Spring Boot based example with annotation based
 		States
 		Aggregate
 		entities (Store?)
-	- Commands ohne abstr. super type	
+
 	
