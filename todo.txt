@@ -11,4 +11,7 @@ Spring Boot based example with annotation based
 		Aggregate
 		entities (Store?)
 
-	
+validation error 2 JSON result	
+Custom Validation
+
+AbstractApi

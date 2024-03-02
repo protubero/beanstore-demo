@@ -3,7 +3,9 @@ package de.protubero.beanstoredemo.framework;
 import java.io.File;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Set;
@@ -22,6 +24,7 @@ import de.protubero.beanstore.entity.Entity;
 import de.protubero.beanstore.persistence.api.KryoConfig;
 import de.protubero.beanstore.persistence.kryo.KryoConfiguration;
 import de.protubero.beanstore.persistence.kryo.KryoPersistence;
+import de.protubero.beanstore.pluginapi.BeanStorePlugin;
 
 @Configuration
 public class BeanStoreConfiguration {
@@ -106,8 +109,10 @@ public class BeanStoreConfiguration {
 //				});
 //			};
 //		});
-//		Collection<Object> callbackObjects = applicationContext.getBeansWithAnnotation(BeanStoreCallback.class).values();
-//		callbackObjects.forEach(co -> {
+		Collection<BeanStorePlugin> plugins = applicationContext.getBeansOfType(BeanStorePlugin.class).values();
+		plugins.forEach(plugin -> {
+			log.info("registering plugin " + plugin);
+			builder.addPlugin(plugin);
 //			for(Method method : co.getClass().getDeclaredMethods()) {
 //				BeanStoreInitialized initAnnotation = method.getAnnotation(BeanStoreInitialized.class);
 //				if (initAnnotation != null) {
@@ -118,7 +123,7 @@ public class BeanStoreConfiguration {
 //					initMethods.add(method);
 //				}
 //			}
-//		});
+		});
 		
 		return builder.build();
 	}

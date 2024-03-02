@@ -13,9 +13,11 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.server.ResponseStatusException;
 
 import de.protubero.beanstore.api.BeanStore;
 import de.protubero.beanstore.api.EntityStoreSnapshot;
+import de.protubero.beanstore.store.InstanceNotFoundException;
 import de.protubero.beanstoredemo.beans.Task;
 import de.protubero.beanstoredemo.callbacks.TaskCounter;
 
@@ -28,43 +30,46 @@ public class TaskApi {
 
 	@Autowired
 	private TaskCounter counter;
-	
+
 	private EntityStoreSnapshot<Task> entityStore() {
 		return store.snapshot().entity(Task.class);
 	}
-	
+
 	@GetMapping
 	public List<Task> tasks() {
 		return entityStore().asList();
 	}
-	
+
 	@GetMapping(value = "/count")
 	public Long count() {
 		return counter.getCount();
 	}
-	
-	
+
 	@GetMapping(value = "/{id}")
-    public Task findById(@PathVariable("id") Long id) {
-        return entityStore().find(id);
-    }
+	public Task findById(@PathVariable("id") Long id) {
+		try {
+			return entityStore().find(id);
+		} catch (InstanceNotFoundException instanceNotFoundException) {
+			throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Task not found");
+		}
+	}
 
-    @PostMapping
-    @ResponseStatus(HttpStatus.CREATED)
-    public Long create(@RequestBody Task task) {
-    	store.create(task);
-        return task.id();
-    }
+	@PostMapping
+	@ResponseStatus(HttpStatus.CREATED)
+	public Long create(@RequestBody Task task) {
+		store.create(task);
+		return task.id();
+	}
 
-    @PutMapping(value = "/{id}")
-    @ResponseStatus(HttpStatus.OK)
-    public void update(@PathVariable( "id" ) Long id, @RequestBody Task task) {
-    	store.update(task);
-    }
+	@PutMapping(value = "/{id}")
+	@ResponseStatus(HttpStatus.OK)
+	public void update(@PathVariable("id") Long id, @RequestBody Task task) {
+		store.update(task);
+	}
 
-    @DeleteMapping(value = "/{id}")
-    @ResponseStatus(HttpStatus.OK)
-    public void delete(@PathVariable("id") Long id) {
-    	store.delete(Task.class, id);
-    }	
+	@DeleteMapping(value = "/{id}")
+	@ResponseStatus(HttpStatus.OK)
+	public void delete(@PathVariable("id") Long id) {
+		store.delete(Task.class, id);
+	}
 }
