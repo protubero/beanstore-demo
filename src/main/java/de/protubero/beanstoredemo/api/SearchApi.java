@@ -1,4 +1,4 @@
-package de.protubero.beanstoredemo;
+package de.protubero.beanstoredemo.api;
 
 import java.util.List;
 
