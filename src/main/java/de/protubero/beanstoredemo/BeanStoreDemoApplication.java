@@ -6,6 +6,7 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
 
+import de.protubero.beanstore.plugins.history.BeanStoreHistoryPlugin;
 import de.protubero.beanstore.plugins.search.BeanStoreSearchPlugin;
 import de.protubero.beanstore.plugins.txlog.BeanStoreTransactionLogPlugin;
 import de.protubero.beanstore.plugins.validate.BeanValidationPlugin;
@@ -51,6 +52,13 @@ public class BeanStoreDemoApplication {
 		return new BeanValidationPlugin();
 	}
 	
+	@Bean
+	public BeanStoreHistoryPlugin beanStoreHistory() {
+		BeanStoreHistoryPlugin result = new BeanStoreHistoryPlugin();
+		result.register("task");
+		return result;
+	}
+
 	@Bean
 	public BeanStoreTransactionLogPlugin txLogPlugin() {
 		return new BeanStoreTransactionLogPlugin();

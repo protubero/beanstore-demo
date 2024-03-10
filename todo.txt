@@ -1,18 +1,4 @@
-First BeanStore Initialisation
 
 
-Spring Boot based example with annotation based
-	- Aggregates
-		@InstanceListener(ToDo.class)
-	- Entity discovery
-	- @Configuiration / @Bean  BeanStore, SearchPlugin, HistoryPlugin 
-	- Endpoint
-		States
-		Aggregate
-		entities (Store?)
-
-validation error 2 JSON result	
-Custom Validation
-
-AbstractApi
-Opt Locking
+Update/Delete Opt Locking if '_version'
+create returns id

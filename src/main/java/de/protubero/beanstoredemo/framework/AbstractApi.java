@@ -25,11 +25,15 @@ import de.protubero.beanstore.api.BeanStore;
 import de.protubero.beanstore.api.EntityStoreSnapshot;
 import de.protubero.beanstore.entity.AbstractEntity;
 import de.protubero.beanstore.entity.EntityCompanion;
-import de.protubero.beanstore.store.InstanceNotFoundException;
+import de.protubero.beanstore.tx.TransactionFailure;
 import jakarta.servlet.http.HttpServletResponse;
 
 public abstract class AbstractApi<T extends AbstractEntity> {
 
+	public static class Wrapper<X> {
+		X value;
+	}
+	
 	@Autowired
 	protected BeanStore store;
 
@@ -53,10 +57,11 @@ public abstract class AbstractApi<T extends AbstractEntity> {
 	
 	@GetMapping(value = "/{id}")
 	public T findById(@PathVariable("id") Long id) {
-		try {
-			return entityStore().find(id);
-		} catch (InstanceNotFoundException instanceNotFoundException) {
+		T result = entityStore().find(id);
+		if (result == null) {
 			throw new ResponseStatusException(HttpStatus.NOT_FOUND,  beanClass.getSimpleName() + " not found");
+		} else {
+			return null;
 		}
 	}
 	
@@ -64,9 +69,18 @@ public abstract class AbstractApi<T extends AbstractEntity> {
 	@ResponseStatus(HttpStatus.OK)
 	public void delete(@PathVariable("id") Long id) {
 		try {
-			store.delete(beanClass, id);
-		} catch (InstanceNotFoundException instanceNotFoundException) {
-			throw new ResponseStatusException(HttpStatus.NOT_FOUND,  beanClass.getSimpleName() + " not found");
+			store.delete(beanClass, id, null);
+		} catch (TransactionFailure txFailure) {
+			switch (txFailure.getType()) {
+			case INSTANCE_NOT_FOUND:
+				throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Instance not found");
+			case OPTIMISTIC_LOCKING_FAILED:
+				throw new AssertionError("unexpected");
+			case VERIFICATION_FAILED:
+				throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Failed to verify change");
+			case PERSISTENCE_FAILED:				
+				throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Failed to persist change");
+			}	
 		}
 	}
 	
@@ -78,8 +92,16 @@ public abstract class AbstractApi<T extends AbstractEntity> {
 			
 			// TODO: complete URI
 			response.addHeader("Location", String.valueOf(instance.id()));
-		} catch (Exception e) {
-			throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage());
+		} catch (TransactionFailure txFailure) {
+			switch (txFailure.getType()) {
+			case INSTANCE_NOT_FOUND:
+			case OPTIMISTIC_LOCKING_FAILED:
+				throw new AssertionError("unexpected");
+			case VERIFICATION_FAILED:
+				throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Failed to verify change");
+			case PERSISTENCE_FAILED:				
+				throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Failed to persist change");
+			}	
 		}
 	}
 
@@ -89,25 +111,47 @@ public abstract class AbstractApi<T extends AbstractEntity> {
 		if (!jsonNode.isObject()) {
 			throw new RuntimeException("json has to be an object");
 		}
+
+		Wrapper<Integer> version = new Wrapper<>();
 		
 		EntityCompanion<T> companion = (EntityCompanion<T>) entityStore().meta();
 		Map<String, Object> updatedFields = new HashMap<>();
 		jsonNode.fields().forEachRemaining(field -> {
-			PropertyDescriptor propDesc = companion.propertyDescriptorOf(field.getKey());
-			if (propDesc == null) {
-				throw new RuntimeException("Invalid field name: " + field.getKey());
-			}
-			Object value;
-			try {
-				value = objectMapper.treeToValue(field.getValue(), propDesc.getPropertyType());
-			} catch (JsonProcessingException | IllegalArgumentException e) {
-				throw new RuntimeException("Error reading json", e);
-			}
-			
-			updatedFields.put(field.getKey(), value);
+			if (field.getKey().startsWith("_")) {
+				if (field.getKey().substring(1).equals("version")) {
+					version.value = field.getValue().asInt();
+				}
+			} else {
+				PropertyDescriptor propDesc = companion.propertyDescriptorOf(field.getKey());
+				if (propDesc == null) {
+					throw new RuntimeException("Invalid field name: " + field.getKey());
+				}
+				Object value;
+				try {
+					value = objectMapper.treeToValue(field.getValue(), propDesc.getPropertyType());
+				} catch (JsonProcessingException | IllegalArgumentException e) {
+					throw new RuntimeException("Error reading json", e);
+				}
+				
+				updatedFields.put(field.getKey(), value);
+			}	
 		});	
+
 		
-		store.update(beanClass, id, updatedFields);
+		try {
+			store.update(beanClass, id, version.value, updatedFields);
+		} catch (TransactionFailure txFailure) {
+			switch (txFailure.getType()) {
+			case INSTANCE_NOT_FOUND:
+				throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Instance not found");
+			case OPTIMISTIC_LOCKING_FAILED:
+				throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Optimistic Locking Failed");
+			case VERIFICATION_FAILED:
+				throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Failed to verify change");
+			case PERSISTENCE_FAILED:				
+				throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Failed to persist change");
+			}	
+		}
 	}
 	
 	
