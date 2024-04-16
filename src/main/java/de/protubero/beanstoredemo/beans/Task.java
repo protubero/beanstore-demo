@@ -4,13 +4,17 @@ import java.time.LocalDateTime;
 
 import de.protubero.beanstore.entity.AbstractEntity;
 import de.protubero.beanstore.entity.Entity;
+import jakarta.validation.constraints.NotBlank;
 
 @Entity(alias = "task")
 public class Task extends AbstractEntity {
 
 	private Priority priority;
 	private Boolean completed;
+	
+	@NotBlank(message="task text can not be empty")
 	private String text2;
+	
 	private LocalDateTime createdAt;
 	private LocalDateTime completedAt;
 	private Boolean deleted;
@@ -70,8 +74,8 @@ public class Task extends AbstractEntity {
 		return text2;
 	}
 
-	public void setText2(String text2) {
-		this.text2 = text2;
+	public void setText2(String text) {
+		this.text2 = text;
 	}
 
 }

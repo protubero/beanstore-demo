@@ -55,7 +55,7 @@ public class BeanStoreDemoApplication {
 	@Bean
 	public BeanStoreHistoryPlugin beanStoreHistory() {
 		BeanStoreHistoryPlugin result = new BeanStoreHistoryPlugin();
-		result.register("task");
+		result.register("task", "employee");
 		return result;
 	}
 

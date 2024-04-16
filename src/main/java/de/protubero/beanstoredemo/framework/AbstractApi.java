@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.server.ResponseStatusException;
 
@@ -51,7 +52,7 @@ public abstract class AbstractApi<T extends AbstractEntity> {
 	}
 	
 	@GetMapping
-	public List<T> tasks() {
+	public List<T> getAll() {
 		return entityStore().asList();
 	}
 	
@@ -75,9 +76,9 @@ public abstract class AbstractApi<T extends AbstractEntity> {
 			case INSTANCE_NOT_FOUND:
 				throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Instance not found");
 			case OPTIMISTIC_LOCKING_FAILED:
-				throw new AssertionError("unexpected");
+				throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Optimistic Locking Failed");
 			case VERIFICATION_FAILED:
-				throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Failed to verify change");
+				throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Failed to verify change: " + txFailure.getMessage());
 			case PERSISTENCE_FAILED:				
 				throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Failed to persist change");
 			}	
@@ -88,17 +89,22 @@ public abstract class AbstractApi<T extends AbstractEntity> {
 	@ResponseStatus(HttpStatus.CREATED)
 	public void create(@RequestBody T instance, HttpServletResponse response) {
 		try {
-			store.create(instance);
+			T newInstance = store.create(instance);
 			
-			// TODO: complete URI
-			response.addHeader("Location", String.valueOf(instance.id()));
+			String locationHeaderValue = String.valueOf(newInstance.id());
+			
+			RequestMapping requestMapping = getClass().getAnnotation(RequestMapping.class);
+			if (requestMapping != null) {
+				locationHeaderValue = requestMapping.value()[0] + "/" + locationHeaderValue;
+			}
+			response.addHeader("Location", locationHeaderValue);
 		} catch (TransactionFailure txFailure) {
 			switch (txFailure.getType()) {
 			case INSTANCE_NOT_FOUND:
 			case OPTIMISTIC_LOCKING_FAILED:
 				throw new AssertionError("unexpected");
 			case VERIFICATION_FAILED:
-				throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Failed to verify change");
+				throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Failed to verify change: " + txFailure.getMessage());
 			case PERSISTENCE_FAILED:				
 				throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Failed to persist change");
 			}	
@@ -147,7 +153,7 @@ public abstract class AbstractApi<T extends AbstractEntity> {
 			case OPTIMISTIC_LOCKING_FAILED:
 				throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Optimistic Locking Failed");
 			case VERIFICATION_FAILED:
-				throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Failed to verify change");
+				throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Failed to verify change: " + txFailure.getMessage());
 			case PERSISTENCE_FAILED:				
 				throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Failed to persist change");
 			}	

@@ -3,7 +3,6 @@ package de.protubero.beanstoredemo.framework;
 import java.io.File;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
@@ -20,6 +19,7 @@ import org.springframework.context.annotation.Configuration;
 
 import de.protubero.beanstore.api.BeanStore;
 import de.protubero.beanstore.builder.BeanStoreBuilder;
+import de.protubero.beanstore.builder.MapStoreSnapshotBuilder;
 import de.protubero.beanstore.entity.Entity;
 import de.protubero.beanstore.persistence.api.KryoConfig;
 import de.protubero.beanstore.persistence.kryo.KryoConfiguration;
@@ -42,15 +42,14 @@ public class BeanStoreConfiguration {
 
 	@Autowired
 	private ClassScanner classScanner;
-	
-	private List<Runnable> initInvocations = new ArrayList<>();
 
 	private static final String[] SCANNED_PACKAGES = { "de.protubero.beanstoredemo" };
 
-	@SuppressWarnings({ "unchecked", "rawtypes" })
+	
 	@Bean
-	public BeanStore createBeanStore() {
+	public KryoPersistence kryoPersistence() {
 		log.info("Build Kryo Configuration");
+		
 
 		KryoConfiguration kryoConfig = KryoConfiguration.create();
 		Set<String> kryoConfClassSet = classScanner.findAnnotatedClasses(KryoConfig.class, SCANNED_PACKAGES);
@@ -62,6 +61,12 @@ public class BeanStoreConfiguration {
 		log.info("Build Kryo Persistence");
 		File dataFile = new File(filename);
 		KryoPersistence persistence = KryoPersistence.of(dataFile, kryoConfig);
+		return persistence;
+	}
+	
+	@SuppressWarnings({ "unchecked", "rawtypes" })
+	@Bean
+	public BeanStore createBeanStore(@Autowired KryoPersistence persistence) {
 
 		log.info("Build Bean Store Builder");
 		BeanStoreBuilder builder = BeanStoreBuilder.init(persistence);
@@ -96,36 +101,18 @@ public class BeanStoreConfiguration {
 		});
 
 		
-		// Callbacks
-//		builder.addPlugin(new BeanStorePlugin() {
-//			@Override
-//			public void onEndCreate(BeanStore beanStore) {
-//				initMethods.forEach(m -> {
-//					try {
-//						m.invoke();
-//					} catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
-//						throw new RuntimeException(e);
-//					}
-//				});
-//			};
-//		});
 		Collection<BeanStorePlugin> plugins = applicationContext.getBeansOfType(BeanStorePlugin.class).values();
 		plugins.forEach(plugin -> {
 			log.info("registering plugin " + plugin);
 			builder.addPlugin(plugin);
-//			for(Method method : co.getClass().getDeclaredMethods()) {
-//				BeanStoreInitialized initAnnotation = method.getAnnotation(BeanStoreInitialized.class);
-//				if (initAnnotation != null) {
-//					Class<?>[] paramTypes = method.getParameterTypes();
-//					if (paramTypes.length != 1 || !BeanStore.class.isAssignableFrom(paramTypes[0])) {
-//						throw new RuntimeException("Invalid parameters of 'BeanStoreInitialized' annotated method " + method.getName());
-//					}
-//					initMethods.add(method);
-//				}
-//			}
 		});
 		
 		return builder.build();
+	}
+	
+	@Bean
+	public MapStoreSnapshotBuilder createMapStoreSnapshotBuilder(@Autowired KryoPersistence persistence) {
+		return MapStoreSnapshotBuilder.init(persistence);
 	}
 
 	private Class<?> classByName(String cls) {

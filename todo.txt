@@ -1,4 +1,0 @@
-
-
-Update/Delete Opt Locking if '_version'
-create returns id

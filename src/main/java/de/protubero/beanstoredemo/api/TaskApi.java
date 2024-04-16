@@ -26,13 +26,9 @@ public class TaskApi extends AbstractApi<Task> {
 		super(Task.class);
 	}
 
-	@GetMapping(value = "/priorityStats")
+	@GetMapping(value = "/stats")
 	public Map<Priority, Integer> priorityStats() {
 		return counter.getPriorityCountMap();
 	}
 
-	@GetMapping(value = "/test")
-	public void test(@RequestBody Employee employee) {
-		System.out.println(employee);
-	}
 }
