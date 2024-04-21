@@ -1,4 +1,4 @@
-package de.protubero.beanstoredemo.api;
+package de.protubero.beanstoredemo.service;
 
 import java.util.List;
 
@@ -8,13 +8,13 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import de.protubero.beanstoredemo.beans.Employee;
-import de.protubero.beanstoredemo.framework.AbstractApi;
+import de.protubero.beanstoredemo.framework.AbstractService;
 
 @RestController
 @RequestMapping("/employee")
-public class EmployeeApi extends AbstractApi<Employee> {
+public class EmployeeService extends AbstractService<Employee> {
 
-	public EmployeeApi() {
+	public EmployeeService() {
 		super(Employee.class);
 	}
 

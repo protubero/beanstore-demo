@@ -7,6 +7,7 @@ import de.protubero.beanstore.entity.Entity;
 public class ToDo extends AbstractEntity {
 
 	private String text;
+	private User user;
 
 	public String getText() {
 		return text;
@@ -18,6 +19,14 @@ public class ToDo extends AbstractEntity {
 	
 	@Override
 	public String toString() {
-		return id().toString() + "/" + super.version() + "  " + text;
+		return "id " + id().toString() + "/version " + super.version() + ": " + text;
+	}
+
+	public User getUser() {
+		return user;
+	}
+
+	public void setUser(User user) {
+		this.user = user;
 	}
 }

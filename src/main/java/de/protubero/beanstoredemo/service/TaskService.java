@@ -1,4 +1,4 @@
-package de.protubero.beanstoredemo.api;
+package de.protubero.beanstoredemo.service;
 
 import java.util.Map;
 
@@ -11,18 +11,18 @@ import org.springframework.web.bind.annotation.RestController;
 import de.protubero.beanstoredemo.beans.Employee;
 import de.protubero.beanstoredemo.beans.Priority;
 import de.protubero.beanstoredemo.beans.Task;
-import de.protubero.beanstoredemo.callbacks.TaskPriorityStats;
-import de.protubero.beanstoredemo.framework.AbstractApi;
+import de.protubero.beanstoredemo.framework.AbstractService;
+import de.protubero.beanstoredemo.projections.TaskPriorityStats;
 
 @RestController
-@RequestMapping("/tasks")
-public class TaskApi extends AbstractApi<Task> {
+@RequestMapping("/task")
+public class TaskService extends AbstractService<Task> {
 
 
 	@Autowired
 	private TaskPriorityStats counter;
 
-	public TaskApi() {
+	public TaskService() {
 		super(Task.class);
 	}
 

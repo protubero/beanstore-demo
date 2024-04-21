@@ -1,4 +1,4 @@
-package de.protubero.beanstoredemo.callbacks;
+package de.protubero.beanstoredemo.projections;
 
 import java.util.HashMap;
 import java.util.Map;

@@ -8,32 +8,57 @@ import de.protubero.beanstore.builder.BeanStoreBuilder;
 import de.protubero.beanstore.entity.Keys;
 import de.protubero.beanstore.persistence.kryo.KryoConfiguration;
 import de.protubero.beanstore.persistence.kryo.KryoPersistence;
+import de.protubero.beanstore.persistence.kryo.PropertyBeanSerializer;
+import de.protubero.beanstore.plugins.txlog.BeanStoreTransactionLogPlugin;
 import de.protubero.beanstore.tx.TransactionFailure;
 
 public class Quickstart {
 
-	public static void main(String[] args) {
+	private static void exec() {
 		KryoConfiguration kryoConfig = KryoConfiguration.create();
-		KryoPersistence persistence = KryoPersistence.of(new File("c:\\work\\demo.bst"), kryoConfig);
+		kryoConfig.register(User.class, PropertyBeanSerializer.class, 345);
+		
+		KryoPersistence persistence = KryoPersistence.of(new File("c:\\demo\\demo.bst"), kryoConfig);
+		
 		BeanStoreBuilder builder = BeanStoreBuilder.init(persistence);
+		
 		builder.registerEntity(ToDo.class);
+		// builder.addMigration(null, null);
+		// builder.addPlugin(new BeanStoreTransactionLogPlugin());
+		// builder.initNewStore(null);
+		// builder.registerMapEntity("todo");
+		// builder.setAutoCreateEntities(true);
 
 		BeanStore store = builder.build();
+		store.callbacks().onChangeInstance(ToDo.class, evt -> {
+			System.out.println("Old: " + evt.replacedInstance());
+			System.out.println("New: " + evt.newInstance());
+		});
+
 		
-		
-//		var tx = store.transaction();		
-//		ToDo updToDo = tx.update(Keys.versionKey(ToDo.class, 1, 1));
-//		updToDo.setText("Hello   Manfred");
-		try {
+//		store.locked(ctx -> {
+//			var tx = store.transaction();
+//			tx.update(Keys.key("todo", 0)).put("text", "xyz");
 //			tx.execute();
-			
-			System.out.println("snapshot version = " + store.snapshot().version());
-			var allToDos = store.snapshot().entity(ToDo.class).stream().collect(Collectors.toList());
-			allToDos.forEach(System.out::println);		
-		} catch (TransactionFailure txf) {
-			System.out.println(txf.getType());
-		}
+//		});
+
+		var tx = store.transaction();
+		tx.update(Keys.key(ToDo.class, 0)).setText("345678");
+		tx.execute();
 		
+		System.out.println("snapshot version = " + store.snapshot().version());
+		store.snapshot().entity("todo").stream().forEach(System.out::println);
 	}
 
+	public static void main(String[] args) {
+		try {
+			exec();
+		} catch (TransactionFailure txf) {
+			System.out.println("Transaction Failure of type " + txf.getType());
+		} catch (Exception e) {
+			e.printStackTrace(System.out);
+		}
+		System.exit(0);
+	}
+	
 }

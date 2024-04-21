@@ -20,11 +20,16 @@ import org.springframework.context.annotation.Configuration;
 import de.protubero.beanstore.api.BeanStore;
 import de.protubero.beanstore.builder.BeanStoreBuilder;
 import de.protubero.beanstore.builder.MapStoreSnapshotBuilder;
+import de.protubero.beanstore.entity.AbstractEntity;
 import de.protubero.beanstore.entity.Entity;
 import de.protubero.beanstore.persistence.api.KryoConfig;
 import de.protubero.beanstore.persistence.kryo.KryoConfiguration;
 import de.protubero.beanstore.persistence.kryo.KryoPersistence;
 import de.protubero.beanstore.pluginapi.BeanStorePlugin;
+import de.protubero.beanstore.plugins.history.BeanStoreHistoryPlugin;
+import de.protubero.beanstore.plugins.search.BeanStoreSearchPlugin;
+import de.protubero.beanstore.plugins.validate.BeanValidationPlugin;
+import de.protubero.beanstoredemo.beans.Task;
 
 @Configuration
 public class BeanStoreConfiguration {
@@ -66,15 +71,14 @@ public class BeanStoreConfiguration {
 	
 	@SuppressWarnings({ "unchecked", "rawtypes" })
 	@Bean
-	public BeanStore createBeanStore(@Autowired KryoPersistence persistence) {
+	public BeanStore createBeanStore(
+			@Autowired KryoPersistence persistence,
+			@Autowired BeanStoreSearchPlugin searchPlugin,
+			@Autowired BeanStoreHistoryPlugin historyPlugin) {
 
 		log.info("Build Bean Store Builder");
 		BeanStoreBuilder builder = BeanStoreBuilder.init(persistence);
-		Set<String> dataBeanClassSet = classScanner.findAnnotatedClasses(Entity.class, SCANNED_PACKAGES);
-		dataBeanClassSet.forEach(cls -> {
-			Class<?> clazz = classByName(cls);
-			builder.registerEntity((Class) clazz);
-		});
+	
 
 		builder.initNewStore(storeInitializer);
 
@@ -101,6 +105,25 @@ public class BeanStoreConfiguration {
 		});
 
 		
+		
+		Set<String> dataBeanClassSet = classScanner.findAnnotatedClasses(Entity.class, SCANNED_PACKAGES);
+		dataBeanClassSet.forEach(cls -> {
+			Class<? extends AbstractEntity> clazz = (Class<? extends AbstractEntity>) classByName(cls);
+			Entity entity = clazz.getAnnotation(Entity.class);
+			builder.registerEntity((Class) clazz);
+			if (Searchable.class.isAssignableFrom(clazz)) {
+				searchPlugin.register(clazz, obj -> {
+					return ((Searchable) obj).toSearchString();
+				});
+			}
+			
+			History history = clazz.getAnnotation(History.class);
+			if (history != null) {
+				log.info("providing history of entity " + entity.alias());
+				historyPlugin.register(entity.alias());
+			}
+		});		
+		
 		Collection<BeanStorePlugin> plugins = applicationContext.getBeansOfType(BeanStorePlugin.class).values();
 		plugins.forEach(plugin -> {
 			log.info("registering plugin " + plugin);
@@ -109,11 +132,32 @@ public class BeanStoreConfiguration {
 		
 		return builder.build();
 	}
+
 	
 	@Bean
 	public MapStoreSnapshotBuilder createMapStoreSnapshotBuilder(@Autowired KryoPersistence persistence) {
 		return MapStoreSnapshotBuilder.init(persistence);
 	}
+	
+	@Bean
+	public BeanStoreSearchPlugin searchPlugin() {
+		BeanStoreSearchPlugin plugin = new BeanStoreSearchPlugin();
+		
+		
+		return plugin;
+	}
+	
+	@Bean
+	public BeanValidationPlugin beanValidation() {
+		return new BeanValidationPlugin();
+	}
+	
+	@Bean
+	public BeanStoreHistoryPlugin beanStoreHistory() {
+		BeanStoreHistoryPlugin result = new BeanStoreHistoryPlugin();
+		return result;
+	}
+		
 
 	private Class<?> classByName(String cls) {
 		Class<?> clazz;

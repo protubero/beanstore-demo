@@ -29,7 +29,7 @@ import de.protubero.beanstore.entity.EntityCompanion;
 import de.protubero.beanstore.tx.TransactionFailure;
 import jakarta.servlet.http.HttpServletResponse;
 
-public abstract class AbstractApi<T extends AbstractEntity> {
+public abstract class AbstractService<T extends AbstractEntity> {
 
 	public static class Wrapper<X> {
 		X value;
@@ -43,7 +43,7 @@ public abstract class AbstractApi<T extends AbstractEntity> {
 	
 	protected Class<T> beanClass;
 
-	public AbstractApi(Class<T> beanClass) {
+	public AbstractService(Class<T> beanClass) {
 		this.beanClass = Objects.requireNonNull(beanClass);
 	}
 	
@@ -62,7 +62,7 @@ public abstract class AbstractApi<T extends AbstractEntity> {
 		if (result == null) {
 			throw new ResponseStatusException(HttpStatus.NOT_FOUND,  beanClass.getSimpleName() + " not found");
 		} else {
-			return null;
+			return result;
 		}
 	}
 	
@@ -89,7 +89,9 @@ public abstract class AbstractApi<T extends AbstractEntity> {
 	@ResponseStatus(HttpStatus.CREATED)
 	public void create(@RequestBody T instance, HttpServletResponse response) {
 		try {
-			T newInstance = store.create(instance);
+			var tx = store.transaction();
+			T newInstance = tx.create(instance);
+	    	tx.execute();			
 			
 			String locationHeaderValue = String.valueOf(newInstance.id());
 			

@@ -27,7 +27,7 @@ public class BeanStoreDemoApplication {
 	public BeanStoreInitializer storeInitializer() {
 		return tx -> {
 			Task newTask = tx.create(Task.class);
-			newTask.setText2("Eat lunch");
+			newTask.setText("Eat lunch");
 			newTask.setCreatedAt(LocalDateTime.now());
 			newTask.setPriority(Priority.Today);
 			
@@ -36,28 +36,7 @@ public class BeanStoreDemoApplication {
 		};
 	}
 	
-	@Bean
-	public BeanStoreSearchPlugin searchPlugin() {
-		BeanStoreSearchPlugin plugin = new BeanStoreSearchPlugin();
-		
-		plugin.register(Task.class, task -> {
-			return task.getText2() + " elkos";
-		});
-		
-		return plugin;
-	}
-	
-	@Bean
-	public BeanValidationPlugin beanValidation() {
-		return new BeanValidationPlugin();
-	}
-	
-	@Bean
-	public BeanStoreHistoryPlugin beanStoreHistory() {
-		BeanStoreHistoryPlugin result = new BeanStoreHistoryPlugin();
-		result.register("task", "employee");
-		return result;
-	}
+
 
 	@Bean
 	public BeanStoreTransactionLogPlugin txLogPlugin() {

@@ -1,16 +1,16 @@
-package de.protubero.beanstoredemo.api;
+package de.protubero.beanstoredemo.service;
 
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import de.protubero.beanstoredemo.beans.TeamMember;
-import de.protubero.beanstoredemo.framework.AbstractApi;
+import de.protubero.beanstoredemo.framework.AbstractService;
 
 @RestController
 @RequestMapping("/member")
-public class TeamMemberApi extends AbstractApi<TeamMember> {
+public class TeamMemberService extends AbstractService<TeamMember> {
 
-	public TeamMemberApi() {
+	public TeamMemberService() {
 		super(TeamMember.class);
 	}
 

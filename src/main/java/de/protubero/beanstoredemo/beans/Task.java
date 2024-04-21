@@ -4,16 +4,19 @@ import java.time.LocalDateTime;
 
 import de.protubero.beanstore.entity.AbstractEntity;
 import de.protubero.beanstore.entity.Entity;
+import de.protubero.beanstoredemo.framework.History;
+import de.protubero.beanstoredemo.framework.Searchable;
 import jakarta.validation.constraints.NotBlank;
 
 @Entity(alias = "task")
-public class Task extends AbstractEntity {
+@History
+public class Task extends AbstractEntity implements Searchable {
 
 	private Priority priority;
 	private Boolean completed;
 	
 	@NotBlank(message="task text can not be empty")
-	private String text2;
+	private String text;
 	
 	private LocalDateTime createdAt;
 	private LocalDateTime completedAt;
@@ -70,12 +73,17 @@ public class Task extends AbstractEntity {
 		this.deletedAt = deletedAt;
 	}
 
-	public String getText2() {
-		return text2;
+	public String getText() {
+		return text;
 	}
 
-	public void setText2(String text) {
-		this.text2 = text;
+	public void setText(String text) {
+		this.text = text;
+	}
+
+	@Override
+	public String toSearchString() {
+		return text;
 	}
 
 }
