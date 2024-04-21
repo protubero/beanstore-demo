@@ -1,8 +1,7 @@
 package de.protubero.beanstoredemo.migrations;
 
 import de.protubero.beanstore.builder.MigrationTransaction;
-import de.protubero.beanstoredemo.framework.BeanStoreMigration;
-import de.protubero.beanstoredemo.framework.Migration;
+import de.protubero.beanstorespring.BeanStoreMigration;
 
 // @Migration(name="task-deleted-not-null", order=2)
 public class TaskDeletedNotNullMigration implements BeanStoreMigration {

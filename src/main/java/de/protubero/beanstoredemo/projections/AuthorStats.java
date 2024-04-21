@@ -9,8 +9,6 @@ import org.springframework.stereotype.Service;
 
 import de.protubero.beanstore.api.BeanStore;
 import de.protubero.beanstoredemo.beans.Book;
-import de.protubero.beanstoredemo.beans.Priority;
-import de.protubero.beanstoredemo.beans.Task;
 import jakarta.annotation.PostConstruct;
 
 @Service

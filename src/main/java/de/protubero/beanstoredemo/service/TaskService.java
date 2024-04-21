@@ -4,15 +4,13 @@ import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import de.protubero.beanstoredemo.beans.Employee;
 import de.protubero.beanstoredemo.beans.Priority;
 import de.protubero.beanstoredemo.beans.Task;
-import de.protubero.beanstoredemo.framework.AbstractService;
 import de.protubero.beanstoredemo.projections.TaskPriorityStats;
+import de.protubero.beanstorespring.AbstractService;
 
 @RestController
 @RequestMapping("/task")

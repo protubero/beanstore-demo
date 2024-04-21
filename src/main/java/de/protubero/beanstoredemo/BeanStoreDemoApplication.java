@@ -6,15 +6,12 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
 
-import de.protubero.beanstore.plugins.history.BeanStoreHistoryPlugin;
-import de.protubero.beanstore.plugins.search.BeanStoreSearchPlugin;
 import de.protubero.beanstore.plugins.txlog.BeanStoreTransactionLogPlugin;
-import de.protubero.beanstore.plugins.validate.BeanValidationPlugin;
 import de.protubero.beanstoredemo.beans.Address;
 import de.protubero.beanstoredemo.beans.Priority;
 import de.protubero.beanstoredemo.beans.Task;
 import de.protubero.beanstoredemo.beans.TeamMember;
-import de.protubero.beanstoredemo.framework.BeanStoreInitializer;
+import de.protubero.beanstorespring.BeanStoreInitializer;
 
 @SpringBootApplication
 public class BeanStoreDemoApplication {
@@ -35,8 +32,6 @@ public class BeanStoreDemoApplication {
 			teamMember.setAddress(new Address("Koenigsallee", "Berlin"));
 		};
 	}
-	
-
 
 	@Bean
 	public BeanStoreTransactionLogPlugin txLogPlugin() {

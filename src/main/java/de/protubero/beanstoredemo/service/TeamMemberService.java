@@ -4,7 +4,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import de.protubero.beanstoredemo.beans.TeamMember;
-import de.protubero.beanstoredemo.framework.AbstractService;
+import de.protubero.beanstorespring.AbstractService;
 
 @RestController
 @RequestMapping("/member")

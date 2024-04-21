@@ -2,8 +2,8 @@ package de.protubero.beanstoredemo.beans;
 
 import de.protubero.beanstore.entity.AbstractEntity;
 import de.protubero.beanstore.entity.Entity;
-import de.protubero.beanstoredemo.framework.History;
-import de.protubero.beanstoredemo.framework.Searchable;
+import de.protubero.beanstorespring.History;
+import de.protubero.beanstorespring.Searchable;
 
 @Entity(alias="book")
 @History
